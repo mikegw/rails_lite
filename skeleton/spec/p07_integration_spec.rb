@@ -35,6 +35,7 @@ describe "the symphony of things" do
 
     it "route adds to params" do
       route = Phase6::Route.new(Regexp.new("^/statuses/(?<id>\\d+)$"), :get, Ctrlr, :route_does_params)
+
       req.stub(:path) { "/statuses/1" }
       req.stub(:request_method) { :get }
       route.run(req, res)
