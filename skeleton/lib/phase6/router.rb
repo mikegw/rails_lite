@@ -17,19 +17,19 @@ module Phase6
 
     # use pattern to pull out route params (save for later?)
     # instantiate controller and call controller action
-    def run(req, res)
+    def run(req, res, flash)
       match_data = pattern.match(req.path)
       route_params = Hash[match_data.names.zip(match_data.captures)]
-      p route_params
-      self.controller_class.new(req, res, route_params).invoke_action(action_name)
+      self.controller_class.new(req, res, route_params, flash).invoke_action(action_name)
     end
   end
 
   class Router
-    attr_reader :routes
+    attr_reader :routes, :flash
 
     def initialize
       @routes = []
+      @flash = Flash.new
     end
 
     # simply adds a new route to the list of routes
@@ -64,12 +64,9 @@ module Phase6
     # either throw 404 or call run on a matched route
     def run(req, res)
       route = match(req)
-      if route.nil?
-        (res.status = 404)
-        return
-      end
-      route.run(req, res)
-
+      route ? route.run(req, res, flash) : (res.status = 404)
+      
+      flash.clear_dead
     end
   end
 
@@ -83,20 +80,20 @@ module Phase6
     end
 
     def clear_dead
-      @messages.select! {|msg,life| life > 0}
-      @messages.each_pair {|msg, life| life -= 1}
+      messages.select! {|msg,life| life > 0}
+      messages.each_pair {|msg, life| life -= 1}
     end
 
     def now
-      @message_life = 0
+      message_life = 0
       return self
     end
 
     def []=(key, content)
-      @messages[key] = {content: content, life: @message_life}
+      messages[key] = {content: content, life: message_life}
 
     def [](key)
-      @messages[key][:content]
+      messages[key][:content]
     end
 
   end
